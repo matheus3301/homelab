@@ -11,6 +11,9 @@ resource "proxmox_vm_qemu" "talos_node" {
   }
   memory = var.talos_memory
 
+  # SCSI controller - VirtIO SCSI for best performance and compatibility
+  scsihw = "virtio-scsi-single"
+
   # Disk configuration
   disks {
     ide {
@@ -41,7 +44,7 @@ resource "proxmox_vm_qemu" "talos_node" {
   boot = "order=scsi0;ide2"
 
   # Agent disabled for Talos OS
-  agent = 0
+  agent = 1
 
   # Start VM on creation
   onboot = true
