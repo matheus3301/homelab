@@ -21,6 +21,12 @@ worker_nodes = {
     hostname     = "talos-worker-1"
     install_disk = "/dev/sda"
   }
+
+  worker2 = {
+    ip           = "192.168.0.20"
+    hostname     = "talos-worker-2"
+    install_disk = "/dev/sda"
+  }
 }
 
 allow_scheduling_on_control_planes = true

@@ -5,6 +5,7 @@ set -e
 GREEN='\033[0;32m'
 YELLOW='\033[1;33m'
 RED='\033[0;31m'
+BLUE='\033[0;34m'
 NC='\033[0m' # No Color
 
 KUBECONFIG_PATH="${HOME}/.kube/config"
@@ -42,31 +43,51 @@ fi
 mkdir -p "$(dirname "$KUBECONFIG_PATH")"
 mkdir -p "$(dirname "$TALOSCONFIG_PATH")"
 
-# Export kubeconfig
-echo -e "${GREEN}Exporting kubeconfig to ${KUBECONFIG_PATH}${NC}"
-terraform output -raw kubeconfig > "$KUBECONFIG_PATH"
-
 # Export talosconfig
 echo -e "${GREEN}Exporting talosconfig to ${TALOSCONFIG_PATH}${NC}"
 terraform output -raw talosconfig > "$TALOSCONFIG_PATH"
-
-# Set proper permissions
-chmod 600 "$KUBECONFIG_PATH"
 chmod 600 "$TALOSCONFIG_PATH"
+
+# Check if talosctl is available
+if ! command -v talosctl &> /dev/null; then
+    echo -e "${RED}Error: talosctl not found in PATH${NC}"
+    echo -e "${YELLOW}Install talosctl from: https://github.com/siderolabs/talos/releases${NC}"
+    exit 1
+fi
+
+# Get control plane node for kubeconfig generation
+FIRST_CP_NODE=$(terraform output -json controlplane_ips | jq -r '.[0]')
+if [ -z "$FIRST_CP_NODE" ] || [ "$FIRST_CP_NODE" = "null" ]; then
+    echo -e "${RED}Error: Could not retrieve control plane node IP${NC}"
+    exit 1
+fi
+
+# Merge kubeconfig using talosctl
+echo -e "${GREEN}Merging kubeconfig into ${KUBECONFIG_PATH}${NC}"
+talosctl kubeconfig --nodes "$FIRST_CP_NODE" --endpoints "$FIRST_CP_NODE" --talosconfig "$TALOSCONFIG_PATH"
 
 echo -e "${GREEN}✓ Configuration files exported successfully!${NC}"
 echo ""
 echo -e "Kubeconfig:  ${KUBECONFIG_PATH}"
 echo -e "Talosconfig: ${TALOSCONFIG_PATH}"
 echo ""
+
+# Get the cluster name
+CLUSTER_NAME=$(terraform output -raw cluster_name)
+echo -e "${GREEN}New context added: admin@${CLUSTER_NAME}${NC}"
+echo ""
+echo -e "To switch to this cluster, run:"
+echo -e "  ${BLUE}kubectl config use-context admin@${CLUSTER_NAME}${NC}"
+echo ""
+echo -e "To see all contexts:"
+echo -e "  ${BLUE}kubectl config get-contexts${NC}"
+echo ""
 echo -e "${GREEN}Testing connection...${NC}"
 
 # Test kubectl connection
 if command -v kubectl &> /dev/null; then
-    echo -e "\n${YELLOW}kubectl version:${NC}"
-    kubectl version --short 2>/dev/null || kubectl version
     echo -e "\n${YELLOW}Cluster nodes:${NC}"
-    kubectl get nodes
+    kubectl get nodes --context "admin@${CLUSTER_NAME}" 2>/dev/null || echo -e "${RED}Could not connect to cluster${NC}"
 else
     echo -e "${YELLOW}kubectl not found in PATH. Install it to test Kubernetes connection.${NC}"
 fi

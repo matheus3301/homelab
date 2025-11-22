@@ -1,7 +1,8 @@
 proxmox_api_url = "https://192.168.0.100:8006/api2/json"
 target_node      = "javazap"
 
-talos_node_count     = 2
+talos_node_count     = 3
+
 talos_cpu_cores      = 2
 talos_cpu_sockets    = 1
 talos_memory         = 4096
