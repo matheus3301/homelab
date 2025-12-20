@@ -75,3 +75,77 @@ When creating Talos OS VMs with Terraform:
 - VMs should be configured with appropriate CPU, memory, and disk resources for K8s workloads
 - Network configuration should support cluster communication
 - Consider using Proxmox templates for Talos OS images
+
+## Kubernetes GitOps Structure
+
+The `kubernetes/` folder contains all Kubernetes configurations managed via GitOps with ArgoCD.
+
+### Folder Structure
+
+```
+kubernetes/
+├── bootstrap/                    # One-time setup files (applied manually)
+│   ├── argocd-install.yaml       # ArgoCD installation manifest
+│   ├── bootstrap-app.yaml        # App-of-Apps that discovers all apps
+│   └── repo-secret.yaml          # GitHub repo credentials (optional for public repos)
+└── apps-config/                  # GitOps-managed applications (auto-discovered)
+    ├── argocd/
+    │   └── argocd-Application.yaml
+    └── kube-system/
+        └── metrics-server-Application.yaml
+```
+
+### Naming Convention
+
+Files follow the pattern `{name}-{Kind}.yaml`:
+- `metrics-server-Application.yaml` - ArgoCD Application for metrics-server
+- `admin-Role.yaml` - Kubernetes Role named admin
+- `dashboard-GrafanaDashboard.yaml` - Grafana dashboard CR
+
+### Deploying Helm Charts
+
+Create an Application manifest with inline values:
+
+```yaml
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: my-app
+  namespace: argocd
+  finalizers:
+    - resources-finalizer.argocd.argoproj.io
+spec:
+  project: default
+  source:
+    repoURL: https://charts.example.com
+    chart: my-chart
+    targetRevision: 1.0.0
+    helm:
+      values: |
+        key: value
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: my-namespace
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+    syncOptions:
+      - CreateNamespace=true
+```
+
+### Deploying Raw Manifests
+
+Place any Kubernetes manifest in `apps-config/{namespace}/` and it will be auto-applied by ArgoCD. Use the naming pattern `{name}-{Kind}.yaml`.
+
+### Bootstrap Commands
+
+```bash
+# Install everything (one-time, files are numbered for correct order)
+kubectl apply -f kubernetes/bootstrap/ -n argocd
+
+# Nuke everything (if needed)
+./kubernetes/bootstrap/__nuke.sh
+```
+
+After bootstrap, ArgoCD auto-discovers and syncs all manifests in `kubernetes/apps-config/`.
