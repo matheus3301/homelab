@@ -149,3 +149,42 @@ kubectl apply -f kubernetes/bootstrap/ -n argocd
 ```
 
 After bootstrap, ArgoCD auto-discovers and syncs all manifests in `kubernetes/apps-config/`.
+
+### External Secrets with 1Password
+
+External Secrets uses 1Password SDK to fetch secrets from the `Kubernetes` vault.
+
+```bash
+# Setup 1Password service account (one-time, requires op CLI)
+./kubernetes/bootstrap/__setup-onepassword.sh
+```
+
+**Manual setup** (if script fails):
+```bash
+# Create service account
+op service-account create "homelab-k8s" --vault Kubernetes:read_items
+
+# Create k8s secret with the token
+kubectl create namespace external-secrets
+kubectl create secret generic onepassword-service-account \
+  -n external-secrets \
+  --from-literal=token='ops_xxxxx...'
+```
+
+**Using secrets** - create an ExternalSecret:
+```yaml
+apiVersion: external-secrets.io/v1
+kind: ExternalSecret
+metadata:
+  name: my-secret
+spec:
+  secretStoreRef:
+    kind: ClusterSecretStore
+    name: onepassword
+  target:
+    creationPolicy: Owner
+  data:
+    - secretKey: password
+      remoteRef:
+        key: my-item/password  # format: <item>/[section/]<field>
+```
