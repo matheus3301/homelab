@@ -104,6 +104,20 @@ Files follow the pattern `{name}-{Kind}.yaml`:
 
 ### Deploying Helm Charts
 
+**IMPORTANT**: Always check the latest chart version and validate values before creating or updating an Application:
+
+```bash
+# Add the repo (if not already added)
+helm repo add <repo-name> <repo-url>
+
+# Update and check latest versions
+helm repo update <repo-name>
+helm search repo <repo-name>/<chart-name> --versions | head -10
+
+# Check available values and their defaults
+helm show values <repo-name>/<chart-name> --version <version>
+```
+
 Create an Application manifest with inline values:
 
 ```yaml
