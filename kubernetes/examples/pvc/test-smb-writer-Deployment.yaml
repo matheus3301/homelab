@@ -1,0 +1,33 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: test-smb-writer
+  namespace: default
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: test-smb-writer
+  template:
+    metadata:
+      labels:
+        app: test-smb-writer
+    spec:
+      containers:
+        - name: writer
+          image: busybox:latest
+          command:
+            - /bin/sh
+            - -c
+            - |
+              while true; do
+                echo "$(date): Hello from Kubernetes!" >> /data/test.log
+                sleep 1
+              done
+          volumeMounts:
+            - name: data
+              mountPath: /data
+      volumes:
+        - name: data
+          persistentVolumeClaim:
+            claimName: test-smb
