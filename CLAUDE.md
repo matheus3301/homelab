@@ -102,6 +102,8 @@ Files follow the pattern `{name}-{Kind}.yaml`:
 - `admin-Role.yaml` - Kubernetes Role named admin
 - `dashboard-GrafanaDashboard.yaml` - Grafana dashboard CR
 
+**IMPORTANT**: One YAML document per file. Never use `---` to combine multiple resources in a single file.
+
 ### Deploying Helm Charts
 
 **IMPORTANT**: Always check the latest chart version and validate values before creating or updating an Application:
