@@ -17,7 +17,7 @@ output "cluster_name" {
 
 output "cluster_endpoint" {
   description = "Cluster endpoint URL"
-  value       = var.cluster_endpoint
+  value       = local.cluster_endpoint
 }
 
 output "controlplane_ips" {

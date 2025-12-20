@@ -4,11 +4,6 @@ variable "cluster_name" {
   default     = "homelab"
 }
 
-variable "cluster_endpoint" {
-  description = "Cluster endpoint URL (e.g., https://192.168.1.100:6443)"
-  type        = string
-}
-
 variable "kubernetes_version" {
   description = "Kubernetes version to use"
   type        = string
@@ -25,6 +20,18 @@ variable "image_schematic" {
   description = "Talos image schematic ID (for custom extensions like qemu-guest-agent)"
   type        = string
   default     = "ce4c980550dd2ab1b17bbf2b08801c7eb59418eafe8f279833297925d67c7515"
+}
+
+variable "gateway" {
+  description = "Default gateway for static IP configuration"
+  type        = string
+  default     = "192.168.0.1"
+}
+
+variable "nameservers" {
+  description = "DNS nameservers"
+  type        = list(string)
+  default     = ["8.8.8.8", "1.1.1.1"]
 }
 
 variable "controlplane_nodes" {

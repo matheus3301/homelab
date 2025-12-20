@@ -1,3 +1,8 @@
+locals {
+  first_controlplane_ip = values(var.controlplane_nodes)[0].ip
+  cluster_endpoint      = "https://${local.first_controlplane_ip}:6443"
+}
+
 # Generate Talos machine secrets
 resource "talos_machine_secrets" "cluster" {
   talos_version = var.talos_version
@@ -13,7 +18,7 @@ data "talos_client_configuration" "cluster" {
 # Data source for machine configuration
 data "talos_machine_configuration" "controlplane" {
   cluster_name     = var.cluster_name
-  cluster_endpoint = var.cluster_endpoint
+  cluster_endpoint = local.cluster_endpoint
   machine_type     = "controlplane"
   machine_secrets  = talos_machine_secrets.cluster.machine_secrets
   talos_version    = var.talos_version
@@ -48,7 +53,7 @@ data "talos_machine_configuration" "controlplane" {
 
 data "talos_machine_configuration" "worker" {
   cluster_name     = var.cluster_name
-  cluster_endpoint = var.cluster_endpoint
+  cluster_endpoint = local.cluster_endpoint
   machine_type     = "worker"
   machine_secrets  = talos_machine_secrets.cluster.machine_secrets
   talos_version    = var.talos_version
@@ -92,6 +97,19 @@ resource "talos_machine_configuration_apply" "controlplane" {
       machine = {
         network = {
           hostname = each.value.hostname
+          interfaces = [
+            {
+              interface = "eth0"
+              addresses = ["${each.value.ip}/24"]
+              routes = [
+                {
+                  network = "0.0.0.0/0"
+                  gateway = var.gateway
+                }
+              ]
+            }
+          ]
+          nameservers = var.nameservers
         }
         install = {
           disk = each.value.install_disk
@@ -115,6 +133,19 @@ resource "talos_machine_configuration_apply" "worker" {
       machine = {
         network = {
           hostname = each.value.hostname
+          interfaces = [
+            {
+              interface = "eth0"
+              addresses = ["${each.value.ip}/24"]
+              routes = [
+                {
+                  network = "0.0.0.0/0"
+                  gateway = var.gateway
+                }
+              ]
+            }
+          ]
+          nameservers = var.nameservers
         }
         install = {
           disk = each.value.install_disk

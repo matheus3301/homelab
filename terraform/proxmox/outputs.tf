@@ -29,3 +29,11 @@ output "talos_node_ids" {
   description = "Map of node names to VM IDs"
   value       = { for node in proxmox_vm_qemu.talos_node : node.name => node.vmid }
 }
+
+output "truenas" {
+  description = "TrueNAS VM information"
+  value = {
+    vmid = proxmox_vm_qemu.truenas.vmid
+    name = proxmox_vm_qemu.truenas.name
+  }
+}
