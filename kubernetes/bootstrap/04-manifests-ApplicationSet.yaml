@@ -1,7 +1,7 @@
 apiVersion: argoproj.io/v1alpha1
 kind: ApplicationSet
 metadata:
-  name: applications
+  name: manifests
   namespace: argocd
 spec:
   goTemplate: true
@@ -14,7 +14,7 @@ spec:
           - path: kubernetes/apps-config/*
   template:
     metadata:
-      name: '{{ .path.basename }}-apps'
+      name: '{{ .path.basename }}-manifests'
       namespace: argocd
     spec:
       project: default
@@ -23,11 +23,13 @@ spec:
         targetRevision: HEAD
         path: '{{ .path.path }}'
         directory:
-          include: '*-Application.yaml'
+          exclude: '*-Application.yaml'
       destination:
         server: https://kubernetes.default.svc
-        namespace: argocd
+        namespace: '{{ .path.basename }}'
       syncPolicy:
         automated:
           prune: true
           selfHeal: true
+        syncOptions:
+          - CreateNamespace=true
