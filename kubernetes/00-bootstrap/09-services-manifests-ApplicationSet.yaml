@@ -1,7 +1,7 @@
 apiVersion: argoproj.io/v1alpha1
 kind: ApplicationSet
 metadata:
-  name: applications
+  name: services-manifests
   namespace: argocd
 spec:
   goTemplate: true
@@ -11,23 +11,27 @@ spec:
         repoURL: https://github.com/matheus3301/homelab.git
         revision: HEAD
         directories:
-          - path: kubernetes/apps-config/*
+          - path: kubernetes/02-services/*
   template:
     metadata:
-      name: '{{ .path.basename }}-apps'
+      name: 'services-{{ .path.basename }}-manifests'
       namespace: argocd
+      annotations:
+        argocd.argoproj.io/sync-wave: "2"
     spec:
-      project: default
+      project: services
       source:
         repoURL: https://github.com/matheus3301/homelab.git
         targetRevision: HEAD
         path: '{{ .path.path }}'
         directory:
-          include: '*-Application.yaml'
+          exclude: '*-Application.yaml'
       destination:
         server: https://kubernetes.default.svc
-        namespace: argocd
+        namespace: '{{ .path.basename }}'
       syncPolicy:
         automated:
           prune: true
           selfHeal: true
+        syncOptions:
+          - CreateNamespace=true

@@ -84,16 +84,35 @@ The `kubernetes/` folder contains all Kubernetes configurations managed via GitO
 
 ```
 kubernetes/
-├── bootstrap/                    # One-time setup files (applied manually)
-│   ├── argocd-install.yaml       # ArgoCD installation manifest
-│   ├── bootstrap-app.yaml        # App-of-Apps that discovers all apps
-│   └── repo-secret.yaml          # GitHub repo credentials (optional for public repos)
-└── apps-config/                  # GitOps-managed applications (auto-discovered)
-    ├── argocd/
-    │   └── argocd-Application.yaml
-    └── kube-system/
-        └── metrics-server-Application.yaml
+├── 00-bootstrap/                 # One-time setup files (applied manually)
+│   ├── 00-argocd-Namespace.yaml
+│   ├── 01-argocd-Raw.yaml        # ArgoCD installation manifest
+│   ├── 02-homelab-repo-Secret.yaml
+│   ├── 03-core-AppProject.yaml   # ArgoCD Project for core infra
+│   ├── 04-services-AppProject.yaml
+│   ├── 05-apps-AppProject.yaml
+│   ├── 06-11-*-ApplicationSet.yaml  # ApplicationSets for each layer
+│   └── __setup-onepassword.sh
+├── 01-core/                      # Core infrastructure (project: core)
+│   ├── metallb/                  # Load balancer
+│   ├── istio-system/             # Service mesh
+│   ├── external-secrets/         # Secrets management
+│   ├── kube-system/              # Cluster services
+│   ├── tailscale/                # VPN/networking
+│   └── global/                   # Cluster-wide resources
+├── 02-services/                  # Shared services (project: services)
+│   └── (databases, observability, etc.)
+└── 03-apps/                      # User applications (project: apps)
+    └── (your applications)
 ```
+
+### ArgoCD Projects
+
+Three ArgoCD Projects separate concerns and provide security boundaries:
+
+- **core**: Full cluster access, can create any resource in any namespace
+- **services**: Full cluster access for shared services
+- **apps**: Restricted to `default` and `apps-*` namespaces, limited resource types
 
 ### Naming Convention
 
@@ -152,19 +171,23 @@ spec:
 
 ### Deploying Raw Manifests
 
-Place any Kubernetes manifest in `apps-config/{namespace}/` and it will be auto-applied by ArgoCD. Use the naming pattern `{name}-{Kind}.yaml`.
+Place any Kubernetes manifest in the appropriate layer folder (`01-core/`, `02-services/`, or `03-apps/`) under a namespace subfolder and it will be auto-applied by ArgoCD. Use the naming pattern `{name}-{Kind}.yaml`.
+
+- Core infrastructure: `kubernetes/01-core/{namespace}/`
+- Shared services: `kubernetes/02-services/{namespace}/`
+- Applications: `kubernetes/03-apps/{namespace}/`
 
 ### Bootstrap Commands
 
 ```bash
 # Install everything (one-time, files are numbered for correct order)
-kubectl apply -f kubernetes/bootstrap/ -n argocd
+kubectl apply -f kubernetes/00-bootstrap/ -n argocd
 
 # Nuke everything (if needed)
-./kubernetes/bootstrap/__nuke.sh
+./kubernetes/00-bootstrap/__nuke.sh
 ```
 
-After bootstrap, ArgoCD auto-discovers and syncs all manifests in `kubernetes/apps-config/`.
+After bootstrap, ArgoCD auto-discovers and syncs all manifests in `kubernetes/01-core/`, `kubernetes/02-services/`, and `kubernetes/03-apps/`.
 
 ### External Secrets with 1Password
 
@@ -172,7 +195,7 @@ External Secrets uses 1Password SDK to fetch secrets from the `Kubernetes` vault
 
 ```bash
 # Setup 1Password service account (one-time, requires op CLI)
-./kubernetes/bootstrap/__setup-onepassword.sh
+./kubernetes/00-bootstrap/__setup-onepassword.sh
 ```
 
 **Manual setup** (if script fails):
