@@ -87,3 +87,34 @@ variable "truenas_nvme_pcie_id" {
   description = "PCIe address of NVMe drive for passthrough. Get with: lspci -nn | grep -i nvme"
   type        = string
 }
+
+# Misc VM Variables
+variable "misc_cpu_cores" {
+  description = "Number of CPU cores for misc VM"
+  type        = number
+}
+
+variable "misc_memory" {
+  description = "Amount of memory in MB for misc VM"
+  type        = number
+}
+
+variable "misc_disk_size" {
+  description = "Disk size for misc VM (e.g., '32G')"
+  type        = string
+}
+
+variable "misc_storage" {
+  description = "Proxmox storage pool for misc VM disk"
+  type        = string
+}
+
+variable "misc_iso" {
+  description = "Path to Ubuntu ISO in Proxmox storage (e.g., 'local:iso/ubuntu-24.04.1-live-server-amd64.iso')"
+  type        = string
+}
+
+variable "misc_network_bridge" {
+  description = "Network bridge for misc VM"
+  type        = string
+}

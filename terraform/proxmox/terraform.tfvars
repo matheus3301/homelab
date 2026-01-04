@@ -19,3 +19,11 @@ truenas_storage        = "local-lvm"
 truenas_iso            = "local:iso/TrueNAS-SCALE-25.10.0.1.iso"
 truenas_network_bridge = "vmbr0"
 truenas_nvme_pcie_id   = "0000:02:00.0"  # Get with: lspci -nn | grep -i nvme
+
+# Misc VM Configuration
+misc_cpu_cores      = 2
+misc_memory         = 4096
+misc_disk_size      = "32G"
+misc_storage        = "local-lvm"
+misc_iso            = "local:iso/ubuntu-24.04.3-live-server-amd64.iso"
+misc_network_bridge = "vmbr0"

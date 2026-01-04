@@ -37,3 +37,12 @@ output "truenas" {
     name = proxmox_vm_qemu.truenas.name
   }
 }
+
+output "misc" {
+  description = "Misc VM information"
+  value = {
+    vmid         = proxmox_vm_qemu.misc.vmid
+    name         = proxmox_vm_qemu.misc.name
+    ipv4_address = proxmox_vm_qemu.misc.default_ipv4_address
+  }
+}
