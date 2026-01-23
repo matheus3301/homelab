@@ -1,15 +1,15 @@
 apiVersion: networking.k8s.io/v1
 kind: Ingress
 metadata:
-  name: hello-world
-  namespace: hello-world
+  name: apps-hello-world
+  namespace: apps-hello-world
 spec:
   ingressClassName: tailscale
   defaultBackend:
     service:
-      name: hello-world
+      name: apps-hello-world
       port:
         number: 80
   tls:
     - hosts:
-        - hello-world
+        - apps-hello-world
